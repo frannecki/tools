@@ -1,0 +1,84 @@
+﻿<UserControl x:Class="sudokuSolver.sudokuGrid"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:sudokuSolver"
+             mc:Ignorable="d" 
+             d:DesignHeight="300" d:DesignWidth="300">
+    <UserControl.Resources>
+        <ControlTemplate x:Key="listbox_template">
+            <Grid Margin="5, 5, 5, 5" Background="Azure">
+                <Border HorizontalAlignment="Center">
+                    <ItemsPresenter />
+                </Border>
+            </Grid>
+        </ControlTemplate>
+
+        <!--style of cell as text boxes-->
+        <Style TargetType="{x:Type TextBox}">
+            <Setter Property="Height" Value="30" />
+            <Setter Property="Width" Value="30" />
+            <Setter Property="TextAlignment" Value="Center" />
+            <Setter Property="FontFamily" Value="Comic Sans MS" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="Height" Value="0" />
+            <Setter Property="Height" Value="30" />
+        </Style>
+
+        <!--template of cell as list box items-->
+        <DataTemplate x:Key="item_template">
+            <TextBox BorderThickness="1"
+                Text="{Binding Path=NUM, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                Foreground="{Binding Path=COLOR, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                Background="{Binding Path=BCOLOR, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                InputMethod.IsInputMethodEnabled="False" PreviewKeyDown="textbox_preview_keydown" />
+        </DataTemplate>
+
+        <!--style of rows as list boxes-->
+        <DataTemplate x:Key="row_template">
+            <ListBox
+                ItemTemplate="{StaticResource item_template}"
+                ItemsSource="{Binding Path=COLNUM}">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" IsItemsHost="True" />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="{x:Type ListBoxItem}">
+                        <!--Setter Property="Padding" Value="0" />
+                        <Setter Property="BorderThickness" Value="0" />
+                        <Setter Property="Margin" Value="0" /-->
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                                    <ContentPresenter/>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+            </ListBox>
+        </DataTemplate>
+    </UserControl.Resources>
+    
+    <Grid>
+        <ListBox Name="list_box" VerticalAlignment="Center"
+            Template="{StaticResource listbox_template}"
+            ItemTemplate="{StaticResource row_template}"
+            ItemsSource="{Binding Path=rowData, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="{x:Type ListBoxItem}">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                                <ContentPresenter/>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </ListBox.ItemContainerStyle>
+        </ListBox>
+    </Grid>
+</UserControl>
