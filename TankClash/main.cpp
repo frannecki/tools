@@ -1,7 +1,7 @@
 #include <time.h>
 #include <vector>
 #include <string>
-#include <iostream>
+#include <random>
 #include <SFML/Graphics.hpp>
 
 struct Position {
@@ -23,8 +23,9 @@ struct bullet {
 struct chariot {
 	int type;
 	int orient;
+	float timer;
 	Position pos;
-	chariot(int o, int x, int y) : orient(o), pos(x, y) {};
+	chariot(int x, int y, int o = 0, int t = 0) : orient(o), pos(x, y), type(t), timer(0) {};
 };
 
 struct gt {
@@ -33,10 +34,9 @@ struct gt {
 	gt(int a = 1, int x = 0, int y = 0) : alive(a), pos(x, y) {};
 };
 
-const float velocity[5] = { .00, .10, .15, .20, .25 };
 
 const int len = 10;
-int x = 2, y = 9;
+//int x = 2, y = 9;
 int field[len][len] = { 0 };
 
 // horizontal and vertical coordinate change
@@ -47,18 +47,56 @@ const int mov_v[4] = {-1, 0, 1, 0};
 const int offset_h[4] = {0, -1, -1, 0};
 const int offset_v[4] = {0, 0, -1, -1};
 
-bool check() {
+
+bool check(int x, int y) {
 	if (x < 0 || x >= len || y < 0 || y >= len)  return false;
     else  return field[y][x]<=1;
 }
 
+int generatePos() {
+	int grid = std::rand() % (len * len);
+	int row = grid / 10;
+	int col = grid % 10;
+	while (field[row][col] > 0) {
+		grid = std::rand() % (len * len);
+		row = grid / 10;
+		col = grid % 10;
+	}
+	return grid;
+}
+
 void generateMap() {
+	int fieldblocks[10][10] = {
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 1, 1, 0, 0, 0, 0, 0, 0, 0},
+		{0, 1, 1, 0, 0, 2, 3, 3, 0, 0},
+		{0, 1, 1, 0, 0, 3, 3, 3, 0, 0},
+		{0, 1, 1, 0, 0, 0, 0, 0, 0, 0},
+		{0, 1, 3, 3, 3, 0, 2, 2, 2, 0},
+		{0, 1, 3, 3, 2, 0, 2, 2, 2, 0},
+		{0, 1, 1, 0, 0, 0, 0, 0, 0, 0}, 
+		{0, 0, 0, 2, 2, 2, 2, 0, 0, 0}, 
+		{0, 0, 0, 2, 4, 4, 2, 0, 0, 0}
+	};
 	for (int i = 0; i < len; ++i) {
-		field[1][i] = 3;
-		field[4][i] = 2;
-		field[6][i] = 1;
+		for (int j = 0; j < len; ++j) {
+			field[i][j] = fieldblocks[i][j];
+		}
 	}
 }
+
+
+void updateVehicleStatus(chariot &ch, int turn, int dx, int dy) {
+	int nx = ch.pos.x, ny = ch.pos.y;
+	ch.pos.x += dx;  ch.pos.y += dy;
+	if (!check(ch.pos.x, ch.pos.y)) {
+		ch.pos.x = nx;  ch.pos.y = ny;
+	}
+	if (field[ny][nx] > 1)  field[ny][nx] = 0;
+	if (field[ch.pos.y][ch.pos.x] != 1)  field[ch.pos.y][ch.pos.x] = 6 + ch.type;
+	ch.orient = turn;
+}
+
 
 void main() {
 	
@@ -79,7 +117,9 @@ void main() {
 	for (int i = 0; i < 8; ++i) {
 		blocks[i] = sf::Sprite(items[i]);
 		blocks[i].setScale(.125, .125);
-		if (i == 4)  blocks[i].setScale(.03125, .03125);  // bullets 16 * 16
+		if (i == 4) {
+			blocks[i].setScale(.03125, .03125);  // bullets 16 * 16
+		}
 	}
 
 	for (int i = 0; i < 2; ++i) {
@@ -87,13 +127,30 @@ void main() {
 	}
 
 	sf::Clock clock;
-	float delay = 0.1;
+	float delay = 0.1, ally_enemy_delay = 1.0;
 	bool pause = false, gameover = false;
 
 	int dx = 0, dy = 0, orient = 0, turn = 0, life = 2;
+	int ally_num = 2, enemy_num = 5;
 
 	std::vector<bullet> shells;
 	std::vector<chariot> allies, enemies;
+
+	chariot player(2, 9);
+
+	for (int i = 0; i < ally_num; ++i) {
+		int grid = generatePos();
+		int row = grid / 10, col = grid % 10;
+		if(field[row][col]==0)  field[row][col] = 7;
+		allies.push_back(chariot(col, row, std::rand() % 4, 1));
+	}
+
+	for (int i = 0; i < enemy_num; ++i) {
+		int grid = generatePos();
+		int row = grid / 10, col = grid % 10;
+		if(field[row][col]==0)  field[row][col] = 8;
+		enemies.push_back(chariot(col, row, std::rand() % 4, 2));
+	}
 
 	while (window.isOpen()) {
 		if (gameover)  break;
@@ -112,7 +169,7 @@ void main() {
 				case(sf::Keyboard::S):  turn = 2; dy += 1; break;
 				case(sf::Keyboard::A):  turn = 3; dx -= 1; break;
 				case(sf::Keyboard::D):  turn = 1; dx += 1; break;
-				case(sf::Keyboard::J):  shells.push_back(bullet(orient, x, y)); break;
+				case(sf::Keyboard::J):  shells.push_back(bullet(player.orient, player.pos.x, player.pos.y)); break;
 				default: break;
 				}
 			}
@@ -120,20 +177,48 @@ void main() {
 
 		if (pause)  continue;
 
-		/// motion of vehicle
-		if (turn != orient) {
-			int diff = turn - orient;
-			if (diff < 0)  diff += 4;
-			blocks[5].rotate(90 * diff);
-			orient = turn;
+		/// motion of prime force vehicle
+		updateVehicleStatus(player, turn, dx, dy);
+
+		/// motion of allies
+		for (int i = 0; i < allies.size(); ++i) {
+			allies[i].timer += time;
+			if (allies[i].timer > ally_enemy_delay) {
+				allies[i].timer = 0;
+			}
+			else  continue;
+			int operation = std::rand() % 5;
+			if (operation == 4) {
+				shells.push_back(bullet(allies[i].orient, allies[i].pos.x, allies[i].pos.y, 1));
+			}
+			else {
+				int turn_orient = operation;
+				dx = mov_h[turn_orient];
+				dy = mov_v[turn_orient];
+				updateVehicleStatus(allies[i], turn_orient, dx, dy);
+			}
 		}
-		int nx = x, ny = y;
-		x += dx;  y += dy;
-		if (!check()) {
-			x = nx;  y = ny;
+
+		/// motion of enemies
+		for (int i = 0; i < enemies.size(); ++i) {
+			enemies[i].timer += time;
+			if (enemies[i].timer > ally_enemy_delay) {
+				enemies[i].timer = 0;
+			}
+			else {
+				continue;
+			}
+			int operation = std::rand() % 5;
+			if (operation == 4) {
+				shells.push_back(bullet(enemies[i].orient, enemies[i].pos.x, enemies[i].pos.y, 2));
+			}
+			else {
+				int turn_orient = operation;
+				dx = mov_h[turn_orient];
+				dy = mov_v[turn_orient];
+				updateVehicleStatus(enemies[i], turn_orient, dx, dy);
+			}
 		}
-		if (field[ny][nx] != 1)  field[ny][nx] = 0;
-		if(field[y][x] != 1)  field[y][x] = 6;
 
 
 		/// check field blocks hit by bullets
@@ -142,7 +227,8 @@ void main() {
 			if (shells[i].timer >= delay) {
 				shells[i].timer = 0;
 				if (field[shells[i].pos.y][shells[i].pos.x] != 1) {
-					field[shells[i].pos.y][shells[i].pos.x] = 0;  // bullet left current position
+					field[shells[i].pos.y][shells[i].pos.x] = 0;  
+					// bullet left current position
 				}
 				shells[i].pos.x += mov_h[shells[i].orient];
 				shells[i].pos.y += mov_v[shells[i].orient];
@@ -158,19 +244,35 @@ void main() {
 								if (shells[i].origin == 2 || shells[i].origin == 0) {
 									if(--life<=0)  gameover = true;
 								}
+								else  field[py][px] = grid_status;
 							}
-							else if (grid_status == 6 || grid_status == 7) {  // bullet hit vehicle
+							else if (grid_status == 6 || grid_status == 7) {  
+								// vehicle hit by vehicle
 								if (shells[i].origin == 2) {
 									if(grid_status==6)  gameover = true;
 									else {
-										//for()
+										for (int k = 0; k < allies.size();) {
+											if (allies[k].pos == shells[i].pos) {
+												allies[k] = allies[(int)allies.size()-1];
+												allies.pop_back();
+											}
+											else  ++k;
+										}
 									}
 								}
+								else  field[py][px] = grid_status;
 							}
 							else if (grid_status == 8) {  // bullet hit enemy vehicle
 								if (shells[i].origin <= 1) {
-									// for()
+									for (int k = 0; k < enemies.size();) {
+										if (enemies[k].pos == shells[i].pos) {
+											enemies[k] = enemies[(int)enemies.size() - 1];
+											enemies.pop_back();
+										}
+										else  ++k;
+									}
 								}
+								else  field[py][px] = grid_status;
 							}
 						}
 					}
@@ -188,10 +290,13 @@ void main() {
 		}
 		
 		/// check for bullet collions
-		for (int i = 0; i < shells.size(); ++i) {
+		for (int i = 0; i < shells.size();) {
+			bool collided = false;
 			for (int j = i + 1; j < shells.size(); ++j) {
-				if (shells[i].pos == shells[j].pos && abs(shells[i].orient - shells[j].orient) == 2)
+				if (shells[i].pos == shells[j].pos && 
+					abs(shells[i].orient - shells[j].orient) == 2)
 				{
+					collided = true;
 					shells[j] = shells[(int)shells.size()-1];
 					shells.pop_back();
 					shells[i] = shells[(int)shells.size() - 1];
@@ -199,6 +304,7 @@ void main() {
 					break;
 				}
 			}
+			if(!collided)  ++i;
 		}
 
 		window.clear(sf::Color::White);
@@ -208,17 +314,36 @@ void main() {
 		for (int i = 0; i < len; ++i) {
 			for (int j = 0; j < len; ++j) {
 				int status = field[i][j];
-				if (status > 0) {
-					if (status == 5) {
+				if (status > 0 && status < 6) {
+					if (status==5) {
 						blocks[4].setPosition(64 * j + 24, 64 * i + 24);
 					}
-					else if (status == 6) {
-						blocks[5].setPosition(64 * (x - offset_h[orient]), 64 * (y - offset_v[orient]));;
-					}
 					else  blocks[status-1].setPosition(64 * j, 64 * i);
-					window.draw(blocks[field[i][j] - 1]);
+					window.draw(blocks[status - 1]);
 				}
 			}
+		}
+
+		if (field[player.pos.y][player.pos.x] != 1) {
+			blocks[5].setRotation(90 * player.orient);
+			blocks[5].setPosition(64 * (player.pos.x - offset_h[player.orient]),
+				64 * (player.pos.y - offset_v[player.orient]));
+			window.draw(blocks[5]);;
+		}
+
+		for (auto ally : allies) {
+			if (field[ally.pos.y][ally.pos.x] == 1)  continue;
+			blocks[6].setRotation(90 * ally.orient);
+			blocks[6].setPosition(64 * (ally.pos.x - offset_h[ally.orient]),
+				64 * (ally.pos.y - offset_v[ally.orient]));
+			window.draw(blocks[6]);
+		}
+		for (auto enemy : enemies) {
+			if (field[enemy.pos.y][enemy.pos.x] == 1)  continue;
+			blocks[7].setRotation(90 * enemy.orient);
+			blocks[7].setPosition(64 * (enemy.pos.x - offset_h[enemy.orient]),
+				64 * (enemy.pos.y - offset_v[enemy.orient]));
+			window.draw(blocks[7]);
 		}
 		window.display();
 		dx = dy = 0;
@@ -228,11 +353,12 @@ void main() {
 	font.loadFromFile("./fonts/ALGER.TTF");
 	sf::Text text("GAMEOVER", font, 80);
 	text.setPosition(100, 200);
+	text.setColor(sf::Color::Cyan);
 
 	while (window.isOpen()) {
 		sf::Event e;
 		while (window.pollEvent(e)) {
-			if (e.type == sf::Event::Closed) {
+			if (e.type == sf::Event::Closed || e.type == sf::Event::KeyPressed) {
 				window.close();
 			}
 		}
