@@ -1,0 +1,76 @@
+body {
+  font: 14px "Century Gothic", Futura, sans-serif;
+  margin: 20px;
+  text-align: center;
+}
+
+.board-row{
+  margin: auto;
+  width: 100%;
+  padding-left: 5%;
+}
+
+.board-row:after {
+  clear: both;
+  content: "";
+  display: table;
+}
+
+.cell {
+  background: #ebd5d5;
+  border: 1px solid #999;
+  float: left;
+  font-size: 24px;
+  font-weight: bold;
+  line-height: 34px;
+  height: 10%;
+  margin-right: -1px;
+  margin-top: -1px;
+  padding: 0;
+  text-align: center;
+  vertical-align: middle;
+  width: 10%;
+  height: 50px;
+  resize: none;
+}
+
+.board {
+  margin: auto;
+  width: 40%;
+  display: block;
+}
+
+.board_inner {
+  margin: auto;
+  width: 90%;
+  display: block;
+  padding: 5px;
+	border: 1px, solid, #cccccc;
+	box-shadow: 0 0 5px #aeeeee;
+	border-radius: 6px;
+}
+
+.buttons{
+  margin: auto;
+  width: 100%;
+  float: top;
+  margin-bottom: 100px;
+}
+
+#button_solve_undo{
+  margin: auto;
+  width: 70%;
+  margin-top: 3%;
+  margin-bottom: 1%;
+}
+
+#button_reset{
+  margin: auto;
+  width: 70%;
+  height: 30px;
+}
+
+#info{
+  font: 25px "Century Gothic", Futura, sans-serif;
+  margin-bottom: 20px;
+}
