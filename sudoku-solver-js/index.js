@@ -2,18 +2,23 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 
+const colors = ["#FFFFFF", "#DDA0DD", "#CD8C95", 
+  "#B3EE3A", "#B0E2FF", "#9AFF9A", 
+  "#436EEE", "#00EE00", "#EE3B3B", "#A0522D"];
+
 class Cell extends React.Component{
     constructor(props){
         super(props);
         this.text_area = React.createRef();
     }
-    
+
     render(){
         return (
             <textarea ref = {this.text_area}
               className = "cell"
               onChange = {this.onValueChanged}
-              value = {(this.props.value === 0) ? '' : this.props.value}
+              value = {(this.props.value === 0) ? "" : this.props.value}
+              style = {{color: colors[this.props.value]}}
             />
         );
     }
@@ -151,23 +156,24 @@ class Game extends React.Component{
         super(props);
         this.state = {
             history : Array(9*9).fill(0*1),
-            values : Array(9*9).fill(0*1)
+            values : Array(9*9).fill(0*1),
+            undone : false
         }
-        this.undo_button = React.createRef();
-        this.solver_board = React.createRef();
     }
 
     handleValueChange = i => val =>{
         var nums = this.state.values.slice();
         nums[i] = val;
-        this.setState({history : this.state.values.slice()});
-        this.setState({values : nums});
-        //this.undo_button.current.disabled = false;
+        this.setState({
+            history : this.state.values.slice(),
+            values : nums,
+            undone : false
+        });
     }
 
     render(){
         return (
-          <div className = "board" ref = {this.solver_board}>
+          <div className = "board">
             <div id = "info">
               <label>Sudoku Solver</label>
             </div>
@@ -180,7 +186,7 @@ class Game extends React.Component{
             <div className = "buttons">
                 <div id = "button_solve_undo">
                     <button onClick = {this.solve}>Solve</button>
-                    <button onClick = {this.undo_}>Undo</button>
+                    <button onClick = {this.undo_} disabled = {this.state.undone}>Undo</button>
                 </div>
                 <button onClick = {this.reset} id = "button_reset">Reset</button>
             </div>
@@ -250,23 +256,29 @@ class Game extends React.Component{
             window.alert('No Solution.');
         }
         else{
-            this.setState({history : this.state.values.slice()});
-            this.setState({values : nums});
-            //this.undo_button.current.disabled = false;
+            this.setState({
+                history : this.state.values.slice(),
+                values : nums,
+                undone : false
+            });
             console.log('solved');
         }
     }
 
     undo_ = () => {
-        this.setState({values : this.state.history.slice()});
-        //this.undo_button.current.disabled = true;
+        this.setState({
+            values : this.state.history.slice(),
+            undone : true
+        });
         console.log('undone');
     }
 
     reset = () => {
-        this.setState({history : this.state.values.slice()});
-        this.setState({values : Array(9*9).fill(0*1)});
-        //this.undo_button.current.disabled = false;
+        this.setState({
+            history : this.state.values.slice(),
+            values : Array(9*9).fill(0*1),
+            undone : false
+        });
         console.log('reset');
     }
 }

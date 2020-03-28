@@ -2,8 +2,12 @@
 ### sudoku-solver
 A solver for 9x9 sudoku puzzles based on WPF
 
+![sudoku-solver-clip](doc/sudoku-solver-clip.jpg)
+
 ### tank-clash
 A small tank game based on sfml
+
+![tank-clash-clip](doc/tank-clash-clip.jpg)
 
 ### sudoku-solver
 A solver for 9x9 sudoku puzzles based on [React](https://github.com/facebook/React)
@@ -18,4 +22,6 @@ Usage:
    npm start
    ```
 
-3. Visit the appointed port of localhost
+3. Visit the assigned port of localhost
+
+![sudoku-solver-js-clip](doc/sudoku-solver-js-clip.jpg)
